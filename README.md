@@ -17,6 +17,58 @@ Built for the [Microsoft Azure AI Developer Hackathon - March 2025](https://azur
 - Azure Computer Vision - For analyzing construction drawings
 - Flask - Python web framework
 
+
+
+## AI Document Search 
+
+The Document Search component demonstrates effective integration of Azure AI services:
+
+### Azure AI Search
+- Indexes and semantically searches construction reference documents
+- Handles complex natural language queries about building standards
+- Retrieves the most relevant documents based on user queries
+- Returns confidence-ranked document matches with summaries
+
+### Azure OpenAI
+- Processes selected documents as context for generating responses
+- Synthesizes information across multiple reference sources
+- Follows specialized system instructions for construction knowledge
+- Generates comprehensive, well-formatted recommendations
+
+### Multi-stage AI Processing
+1. **Search Phase:** Semantic search identifies relevant documents
+2. **Selection Phase:** User reviews and selects contextual documents
+3. **Generation Phase:** OpenAI creates recommendations using selected documents
+4. **Presentation:** Results formatted with markdown for readability
+
+This implementation demonstrates Azure's document intelligence capabilities where AI Search finds relevant information that OpenAI then processes to create actionable construction guidance.
+
+## AI Drawing Analyzer
+
+The Drawing Analyzer component demonstrates sophisticated Azure AI service integration:
+
+### Azure Computer Vision
+- Processes multiple file formats (JPG, PNG, PDF, TIFF)
+- Generates descriptive captions of construction drawings
+- Creates confidence-scored tags identifying key drawing elements
+- Analyzes multi-page PDFs page-by-page
+
+### Azure OpenAI
+- Powers the "Deep Analysis" functionality
+- Takes Computer Vision output as contextual input
+- Performs detailed construction-specific interpretation
+- Returns rich markdown-formatted technical insights
+
+### Progressive AI Analysis Flow
+1. **First-level:** Basic visual understanding via Computer Vision
+2. **Second-level:** Detailed construction interpretation via OpenAI
+3. **Presentation:** Results with confidence scores and formatted highlights
+
+This demonstrates effective AI service chaining where output from one Azure service becomes input for another, creating a comprehensive drawing analysis system.
+
+
+## Solution Architecture
+
 ![Solution and Architecture Overview](./Owner%20Builder%20AI%20Assistant%20Arch.png)
 
 
