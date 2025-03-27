@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Builder Assistant - Document Search{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2>Construction Reference Documents Search</h2>
+                <p>Use construction documents as references for AI-powered answers</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="m-0">Your assistance request</h3>
+        </div>
+        <div class="card-body">
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="searchPrompt" class="font-weight-bold">Your Queries:</label>
+                    <textarea id="searchPrompt" class="form-control markdown-preview" rows="10"></textarea>
+                </div>
+                <div class="form-group mt-2">
+                    <label for="numResults" class="font-weight-bold">Number of reference documents to return:</label>
+                    <input type="number" id="numResults" class="form-control" value="5" min="1" max="15">
+                </div>
+                <button type="submit" id="searchButton" class="btn btn-primary mt-3">
+                    <i class="fa fa-search me-2"></i>Get Reference Documents
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Search Results Column -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="m-0">Ref Documents Results</h3>
+                    <p>Select the documents you want to use for your AI recommendations</p>
+                </div>
+                <div class="card-body">
+                    <div id="loadingSpinner" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="searchError" class="alert alert-danger" style="display: none;"></div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Response Column -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="m-0">Owner Builder AI Recommendations</h3>
+                    <p>Suppliment these with analysis from the AI Drawing Analyzer</p>
+                </div>
+                <div class="card-body">
+                    <div id="generatedResponse"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+    // Make sure this runs when the page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchPromptElement = document.getElementById('searchPrompt');
+
+        // Get the prompt from session storage
+        const selectedPrompt = sessionStorage.getItem('selectedPrompt');
+
+        // Create a preview div for rendered markdown
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'markdown-preview-content markdown-content';
+        previewDiv.style.display = 'block'; // Show preview by default
+
+        // Add toggle button
+        const toggleButton = document.createElement('button');
+        toggleButton.type = 'button';
+        toggleButton.className = 'btn btn-sm btn-outline-secondary mt-2';
+        toggleButton.textContent = 'Edit Text';
+
+        if (selectedPrompt) {
+            console.log('Found prompt in session storage:', selectedPrompt);
+            // Set the textarea value
+            searchPromptElement.value = selectedPrompt;
+            // Render the markdown
+            previewDiv.innerHTML = marked.parse(selectedPrompt);
+        } else {
+            console.log('No prompt found in session storage');
+            previewDiv.innerHTML = marked.parse('Enter your question here...');
+        }
+
+        // Hide textarea by default
+        searchPromptElement.style.display = 'none';
+
+        // Insert the preview div and button after the textarea
+        searchPromptElement.parentNode.insertBefore(previewDiv, searchPromptElement.nextSibling);
+        searchPromptElement.parentNode.insertBefore(toggleButton, previewDiv);
+
+        // Add toggle functionality
+        toggleButton.onclick = function () {
+            const isPreviewVisible = previewDiv.style.display !== 'none';
+            previewDiv.style.display = isPreviewVisible ? 'none' : 'block';
+            searchPromptElement.style.display = isPreviewVisible ? 'block' : 'none';
+            toggleButton.textContent = isPreviewVisible ? 'Toggle Preview' : 'Edit Text';
+
+            // If switching to preview, update the preview content
+            if (!isPreviewVisible) {
+                previewDiv.innerHTML = marked.parse(searchPromptElement.value || 'Enter your question here...');
+            }
+        };
+    });
+
+    // Add this function to help with debugging
+    function checkSessionStorage() {
+        console.log('All session storage items:');
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            console.log(`${key}: ${sessionStorage.getItem(key)}`);
+        }
+    }
+
+    let isRequestInProgress = false;
+
+    async function handleSearch(event) {
+        event.preventDefault();
+
+        if (isRequestInProgress) {
+            return;
+        }
+
+        const searchButton = document.getElementById('searchButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorDiv = document.getElementById('searchError');
+        const searchResults = document.getElementById('searchResults');
+        const prompt = document.getElementById('searchPrompt').value;
+        const numResults = document.getElementById('numResults').value;
+
+        try {
+            isRequestInProgress = true;
+            searchButton.disabled = true;
+            loadingSpinner.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            // Use the correct route from the Blueprint
+            const response = await fetch('/document_search/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: prompt,
+                    result_count: parseInt(numResults),
+                    document_filter: 'All Documents'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Display search results as cards with checkboxes
+            if (data.results && data.results.length > 0) {
+                searchResults.innerHTML = data.results.map(doc => {
+                    // Get the filename, remove .pdf extension for cleaner display
+                    const filename = (doc.metadata_storage_name || 'Unknown Document')
+                        .replace('.pdf', '');
+
+                    // Function to extract a clean title from content
+                    function getTitle(content) {
+                        if (!content) return '';
+
+                        // Remove all special characters and extra whitespace
+                        const cleanContent = content
+                            .replace(/\\[rnt]/g, ' ')    // Replace \r \n \t with space
+                            .replace(/\\/g, '')          // Remove remaining backslashes
+                            .replace(/\s+/g, ' ')        // Normalize whitespace
+                            .trim();
+
+                        // Get first non-empty line that's at least 20 chars
+                        const lines = cleanContent.split(/[.!?]/);
+                        return lines.find(line => line.trim().length >= 20) || lines[0] || '';
+                    }
+
+                    // Get document title/summary
+                    let title = getTitle(doc.content);
+                    if (title.length > 200) {
+                        title = title.substring(0, 200) + '...';
+                    }
+
+                    // Store only necessary data and clean the content
+                    const docData = {
+                        id: doc.id,
+                        metadata_storage_name: doc.metadata_storage_name,
+                        content: doc.content.replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+                    };
+
+                    // Safely serialize the document data
+                    const safeDocValue = JSON.stringify(docData)
+                        .replace(/&/g, '&amp;')
+                        .replace(/'/g, '&apos;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+
+                    return `
+                    <div class="card mb-3 document-card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="selected_docs" 
+                                           value="${safeDocValue}"
+                                           id="doc_${doc.id}" 
+                                           checked>
+                                </div>
+                                <div class="ms-2 flex-grow-1">
+                                    <h5 class="card-title">${filename}</h5>
+                                    <div class="document-summary">${title}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+
+                // Add Generate button if not already present
+                if (!document.getElementById('generateButton')) {
+                    const generateButton = document.createElement('button');
+                    generateButton.id = 'generateButton';
+                    generateButton.className = 'btn btn-success mt-3 w-100';
+                    generateButton.textContent = 'Generate AI Recommendations';
+                    generateButton.onclick = generateResponse; // Directly attach the click handler
+                    searchResults.insertAdjacentElement('afterend', generateButton);
+                    console.log('Generate button created and handler attached');
+                }
+            } else {
+                searchResults.innerHTML = '<p>No relevant documents found.</p>';
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        } finally {
+            isRequestInProgress = false;
+            searchButton.disabled = false;
+            loadingSpinner.style.display = 'none';
+        }
+    }
+
+    async function generateResponse(event) {
+        console.log('Generate Response clicked');
+        event.preventDefault();
+
+        const selectedDocs = Array.from(document.querySelectorAll('input[name="selected_docs"]:checked'));
+        console.log('Selected docs count:', selectedDocs.length);
+
+        if (selectedDocs.length === 0) {
+            alert('Please select at least one document');
+            return;
+        }
+
+        const generateButton = document.getElementById('generateButton');
+        const generatedResponse = document.getElementById('generatedResponse');
+
+        generateButton.disabled = true;
+        generatedResponse.innerHTML = `
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Generating response...</span>
+            </div>
+            <span class="ms-2">Generating response (this may take up to 30 seconds)...</span>
+        </div>
+    `;
+
+        try {
+            // Set up timeout promise
+            const timeout = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out after 45 seconds')), 45000);
+            });
+
+            // Safely parse the checkbox values
+            const processedDocs = selectedDocs.map(checkbox => {
+                try {
+                    const decodedValue = checkbox.value
+                        .replace(/&quot;/g, '"')
+                        .replace(/&apos;/g, "'")
+                        .replace(/&amp;/g, '&')
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>');
+                    return JSON.parse(decodedValue);
+                } catch (e) {
+                    console.error('Error parsing document:', e);
+                    return null;
+                }
+            }).filter(doc => doc !== null);
+
+            const requestData = {
+                query: document.getElementById('searchPrompt').value,
+                selected_docs: processedDocs
+            };
+
+            console.log('Sending request with:', requestData);
+
+            // Create fetch promise
+            const fetchPromise = fetch('/document_search/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            // Race between fetch and timeout
+            const response = await Promise.race([fetchPromise, timeout]);
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Received response:', result);
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            // Check if we have a response
+            if (!result || !result.response) {
+                throw new Error('No response received from server');
+            }
+
+            // Configure marked options for better rendering
+            marked.setOptions({
+                gfm: true,
+                breaks: true,
+                headerIds: false,
+                mangle: false
+            });
+
+            // Convert markdown to HTML and display
+            generatedResponse.innerHTML = `
+            <div class="response-content markdown-content">
+                ${marked.parse(result.response)}
+            </div>
+        `;
+
+        } catch (error) {
+            console.error('Error generating response:', error);
+            generatedResponse.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error generating response:</h5>
+                <p>${error.message}</p>
+                <p class="mt-2">Please try again. If the problem persists, try:</p>
+                <ul>
+                    <li>Selecting fewer documents</li>
+                    <li>Simplifying your question</li>
+                    <li>Refreshing the page</li>
+                </ul>
+            </div>
+        `;
+        } finally {
+            generateButton.disabled = false;
+        }
+    }
+
+    // Add this at the top of your script section
+    const DEFAULT_SYSTEM_INSTRUCTION = `
+You are a knowledgeable assistant for Owner Builders who are managing construction projects. 
+Your goal is to provide accurate, helpful information based on construction manuals, 
+building specifications, and safety guides. When responding:
+
+1. Draw on the information from the construction documents to ensure accuracy
+2. Provide practical advice that follows Australian building standards
+3. Include specific references to relevant sections of building codes where applicable
+4. Identify and state if the task can only be completed by a skilled and licensed tradesperson
+5. List any specific items from the development application approval conditions that need to be met
+6. Ensure that inspections are performed by council or a private certifier at each phase of the build
+7. Format your responses clearly with headings, bullet points, and sections as needed
+8. If you're uncertain about any information, acknowledge the limitations of your knowledge
+9. When providing templates or examples, make them comprehensive and ready to use
+10. Update any references to 11 Kingston to 404 Main 
+
+Focus on being helpful to an Owner Builder who is managing their construction project themselves.
+`;
+
+    // Event Listeners
+    document.getElementById('searchForm').addEventListener('submit', handleSearch);
+
+    // Set the prompt from the phase/task selection
+    document.getElementById('searchPrompt').value = sessionStorage.getItem('selectedPrompt') || '';
+</script>
+
+<style>
+    .document-card {
+        margin-bottom: 1rem;
+        border: 1px solid rgba(0, 0, 0, .125);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .document-summary {
+        font-size: 0.9rem;
+        color: #666;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        position: relative;
+        padding-right: 1rem;
+    }
+
+    .form-check {
+        padding-top: 0.25rem;
+        min-width: 25px;
+        margin-right: 0.5rem;
+    }
+
+    .form-check-input {
+        cursor: pointer;
+    }
+
+    .document-card:hover {
+        background-color: #f8f9fa;
+    }
+
+    .d-flex {
+        align-items: flex-start;
+    }
+
+    .flex-grow-1 {
+        min-width: 0;
+    }
+
+    #generateButton {
+        margin: 1rem 0;
+    }
+
+    /* Remove the gradient fade since we're using line-clamp */
+    .document-summary::after {
+        display: none;
+    }
+
+    /* Add these to your existing styles */
+    .response-content {
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+
+    .response-content h1,
+    .response-content h2,
+    .response-content h3 {
+        color: #2c3e50;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .response-content ul,
+    .response-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .response-content p {
+        margin-bottom: 1rem;
+    }
+
+    .alert {
+        margin-top: 1rem;
+    }
+
+    .markdown-content {
+        /* Basic markdown styling */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3 {
+        color: #2c3e50;
+        margin-top: 1rem;
+        /* Reduced from 1.5rem/2rem */
+        margin-bottom: 0.5rem;
+        /* Reduced from 1rem */
+    }
+
+    .markdown-content p {
+        margin-bottom: 0.5rem;
+        /* Reduced from 1rem */
+        line-height: 1.4;
+        /* Slightly reduced from 1.6 */
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+        margin-bottom: -1.5rem;
+        margin-top: -2.75rem;
+        padding-left: 1.5rem;
+    }
+
+    .markdown-content li {
+        margin-bottom: -2.75rem;
+        margin-left: 0.5rem;
+        margin-top: 1.0rem
+    }
+
+    .markdown-content li:last-child {
+        margin-bottom: 0;
+        /* Remove margin from last list item */
+    }
+
+    .markdown-content code {
+        background-color: #f3f3f3;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+
+    .markdown-content pre {
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+
+    .markdown-content blockquote {
+        margin: 0.5rem 0;
+        /* Reduced overall margin */
+        padding-left: 0.75rem;
+        /* Slightly reduced from 1rem */
+    }
+
+    .markdown-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .markdown-content th {
+        background-color: #f6f8fa;
+    }
+
+    .markdown-preview {
+        min-height: 200px;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+
+    .markdown-preview-content {
+        padding: 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        background-color: #fff;
+        min-height: 200px;
+    }
+
+    .markdown-preview-content:empty {
+        display: none;
+    }
+</style>
+{% endblock %}

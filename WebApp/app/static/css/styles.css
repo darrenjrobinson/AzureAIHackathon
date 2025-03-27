@@ -1,0 +1,74 @@
+/* General styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Card styles */
+.card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s;
+}
+
+/* Form control styles */
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+/* Task list styles */
+#tasks-container .list-group-item {
+    transition: background-color 0.2s;
+}
+
+#tasks-container .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Drawing preview styles */
+#drawing-preview {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+/* Results container styles */
+#document-list .card:hover {
+    transform: translateY(-2px);
+}
+
+/* Response text styles */
+#response-text {
+    max-height: 500px;
+    overflow-y: auto;
+} 

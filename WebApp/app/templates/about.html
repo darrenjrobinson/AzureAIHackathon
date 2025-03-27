@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Builder Assistant - About{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mt-4">About Owner Builder AI Assistant</h1>
+        <p class="lead">A specialised tool for Owner Builders in Australia</p>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">What is an Owner Builder?</h2>
+                <p class="card-text">
+                    In Australia, an Owner Builder is someone who obtains a permit to carry out residential building work on their land, taking on the responsibilities of a builder. This includes managing, coordinating and supervising the construction work.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">How This Tool Helps</h2>
+                <p class="card-text">
+                    The Owner Builder AI Assistant provides three main features to help you manage your project:
+                </p>
+                <ul>
+                    <li><strong>AI Prompt Generator:</strong> Creates tailored prompts to help you get the information you need for specific building tasks.</li>
+                    <li><strong>Document AI Search:</strong> Searches through relevant building documentation to answer your questions based on your generated prompt.</li>
+                    <li><strong>AI Drawing Analyzer:</strong> Uses AI to analyze your construction drawings and provide insights.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Technologies Used</h2>
+                <p class="card-text">
+                    This application is built using:
+                </p>
+                <ul>
+                    <li>Flask - Python web framework</li>
+                    <li>Azure AI Services - For intelligent document analysis</li>
+                    <li>Azure AI Search - For intelligent document search</li>
+                    <li>Azure OpenAI - For generating responses and analysis</li>
+                    <li>Azure Computer Vision - For analyzing construction drawings</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

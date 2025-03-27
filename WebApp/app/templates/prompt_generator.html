@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Builder Assistant - Prompt Generator{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2>Construction Prompt Generator</h2>
+                <p>Generate tailored prompts for your construction needs</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Owner Builder Prompt Generator</h1>
+<p class="text-muted">Select your current project phase and tasks to generate helpful prompts</p>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Select Project Details</h5>
+
+                <div class="mb-3">
+                    <label for="phase-dropdown" class="form-label">Project Phase:</label>
+                    <select id="phase-dropdown" class="form-select">
+                        <option value="">Select a phase...</option>
+                        {% for phase in phases %}
+                        <option value="{{ phase.id }}">{{ phase.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Select Tasks:</label>
+                    <div id="tasks-container" class="list-group">
+                        <div class="list-group-item text-center text-muted">
+                            Please select a phase first
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Work Method:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="workMethod" id="workMethod-diy" value="diy"
+                            checked>
+                        <label class="form-check-label" for="workMethod-diy">
+                            I'll be doing this work myself
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="workMethod" id="workMethod-contractor"
+                            value="contractor">
+                        <label class="form-check-label" for="workMethod-contractor">
+                            I'll be hiring contractors
+                        </label>
+                    </div>
+                </div>
+
+                <button id="generate-button" class="btn btn-primary" disabled>Generate Prompts</button>
+
+                <div class="mt-3 p-2 bg-light rounded">
+                    <p class="mb-0"><strong>Tip:</strong> For best results, be as specific as possible about your
+                        current situation when using these prompts.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Generated Prompts</h5>
+                <p class="text-muted">Refine the request prompts if required</p>
+                <div class="mb-3">
+                    <textarea id="prompt-area" class="form-control" rows="12" readonly
+                        placeholder="Your prompts will appear here..."></textarea>
+                </div>
+                <button id="copy-button" class="btn btn-primary" disabled>Use Prompts in Search</button>
+                <button id="save-button" class="btn btn-secondary ms-2" disabled>Save as Text</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const phaseDropdown = document.getElementById('phase-dropdown');
+        const tasksContainer = document.getElementById('tasks-container');
+        const generateButton = document.getElementById('generate-button');
+        const promptArea = document.getElementById('prompt-area');
+        const copyButton = document.getElementById('copy-button');
+        const saveButton = document.getElementById('save-button');
+
+        // Dictionary to store selected tasks
+        let selectedTasks = {};
+
+        // Phase dropdown change handler
+        phaseDropdown.addEventListener('change', function () {
+            const phaseId = this.value;
+            selectedTasks = {};
+            
+            console.log("Phase selected:", phaseId);
+            
+            if (!phaseId) {
+                tasksContainer.innerHTML = '<div class="list-group-item text-center text-muted">Please select a phase first</div>';
+                generateButton.disabled = true;
+                return;
+            }
+
+            // Fetch tasks for the selected phase
+            fetch(`/prompts/tasks?phase_id=${phaseId}`)
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Tasks data:", data);
+                    tasksContainer.innerHTML = '';
+                    
+                    if (!data.tasks || data.tasks.length === 0) {
+                        tasksContainer.innerHTML = '<div class="list-group-item text-center text-muted">No tasks available for this phase</div>';
+                        return;
+                    }
+
+                    // Create checkboxes for each task
+                    data.tasks.forEach(task => {
+                        const checkbox = document.createElement('div');
+                        checkbox.className = 'list-group-item';
+                        checkbox.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input task-checkbox" type="checkbox" value="${task.id}" id="task-${task.id}">
+                            <label class="form-check-label" for="task-${task.id}">
+                                ${task.name}
+                            </label>
+                        </div>
+                    `;
+                        tasksContainer.appendChild(checkbox);
+                    });
+
+                    // Add event listeners to the new checkboxes
+                    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', function () {
+                            if (this.checked) {
+                                selectedTasks[this.value] = true;
+                            } else {
+                                delete selectedTasks[this.value];
+                            }
+
+                            // Enable generate
+                            generateButton.disabled = Object.keys(selectedTasks).length === 0;
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching tasks:', error);
+                    tasksContainer.innerHTML = `<div class="list-group-item text-center text-danger">Error loading tasks: ${error.message}</div>`;
+                });
+        });
+
+        // Generate button click handler
+        generateButton.addEventListener('click', function() {
+            console.log("Generate button clicked"); // Debug
+            
+            const phaseId = phaseDropdown.value;
+            const workMethod = document.querySelector('input[name="workMethod"]:checked').value;
+            
+            // Get selected task IDs
+            const taskIds = [];
+            document.querySelectorAll('.task-checkbox:checked').forEach(checkbox => {
+                taskIds.push(checkbox.value);
+            });
+            
+            console.log("Phase:", phaseId);
+            console.log("Tasks:", taskIds);
+            console.log("Work method:", workMethod);
+            
+            if (taskIds.length === 0) {
+                alert("Please select at least one task");
+                return;
+            }
+            
+            // Reset prompt area
+            promptArea.value = 'Generating prompts...';
+            copyButton.disabled = true;
+            saveButton.disabled = true;
+            
+            // Send request to generate prompts
+            fetch('/prompts/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    phase_id: phaseId,
+                    task_ids: taskIds,
+                    work_method: workMethod
+                })
+            })
+            .then(response => {
+                console.log("Response status:", response.status);
+                if (!response.ok) {
+                    throw new Error("Server returned error: " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response data:", data);
+                if (data.error) {
+                    promptArea.value = `Error: ${data.error}`;
+                    return;
+                }
+                
+                promptArea.value = data.prompts;
+                copyButton.disabled = false;
+                saveButton.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error generating prompts:', error);
+                promptArea.value = 'Error generating prompts: ' + error.message;
+            });
+        });
+
+        // Copy button click handler
+        copyButton.addEventListener('click', function() {
+            const selectedPrompt = promptArea.value;
+            // Save to session storage
+            sessionStorage.setItem('selectedPrompt', selectedPrompt);
+            // Redirect to the correct document search URL
+            window.location.href = '/document_search/';
+        });
+
+        // Save button click handler
+        saveButton.addEventListener('click', function () {
+            const text = promptArea.value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'owner_builder_prompts.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    });
+</script>
+{% endblock %}

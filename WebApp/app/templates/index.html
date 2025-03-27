@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Builder AI Assistant - Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-4">Welcome to your </br>Owner Builder AI Assistant</h1>
+            <p class="lead">A comprehensive tool for Owner Builders to manage their building projects effectively.</p>
+            <hr class="my-4">
+            <p>This application helps you generate queries for AI to assist with construction tasks, analyze construction drawings, and understand building standards documentation.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <img src="{{ url_for('static', filename='img/OB-AI-Assist-Logo.png') }}" 
+                 alt="Owner Builder AI Assistant Logo" 
+                 class="img-fluid welcome-logo"
+                 style="max-height: 200px; width: auto;">
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">AI Construction Prompt Generator</h5>
+                <p class="card-text">Generate expert prompts for phases of your building project, whether you're doing work yourself or hiring contractors.</p>
+                <a href="{{ url_for('prompt_generator.index') }}" class="btn btn-primary">Go to Prompt Generator</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Reference Document AI Search</h5>
+                <p class="card-text">Select building and saftey standards documents to query for your current building phase and get relevant and accurate advice for your project.</p>
+                <a href="{{ url_for('document_search.index') }}" class="btn btn-primary">Go to Reference Document Search</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">AI Drawing Analyzer</h5>
+                <p class="card-text">Upload and analyze your construction drawings to get expert insights on architectural and structural elements to include in your building project planning.</p>
+                <a href="{{ url_for('drawing_analyzer.index') }}" class="btn btn-primary">Go to Drawing Analyzer</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
