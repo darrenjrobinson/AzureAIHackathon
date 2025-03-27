@@ -1,0 +1,85 @@
+{
+    "@odata.context": "https://<yourendpoint>.search.windows.net/$metadata#indexers/$entity",
+    "@odata.etag": "\"0x8DD6CF40EF82800\"",
+    "name": "owner-builder-indexer",
+    "description": null,
+    "dataSourceName": "adlsgen2-<yoursourcename>-datasource",
+    "skillsetName": "owner-builder-skillset",
+    "targetIndexName": "owner-builder-index",
+    "disabled": null,
+    "schedule": {
+      "interval": "P1D",
+      "startTime": "2025-03-19T05:56:00.832Z"
+    },
+    "parameters": {
+      "batchSize": 1,
+      "maxFailedItems": 0,
+      "maxFailedItemsPerBatch": 0,
+      "base64EncodeKeys": null,
+      "configuration": {
+        "dataToExtract": "contentAndMetadata",
+        "parsingMode": "default",
+        "firstLineContainsHeaders": false,
+        "delimitedTextDelimiter": ","
+      }
+    },
+    "fieldMappings": [
+      {
+        "sourceFieldName": "metadata_storage_path",
+        "targetFieldName": "id",
+        "mappingFunction": {
+          "name": "base64Encode",
+          "parameters": null
+        }
+      },
+      {
+        "sourceFieldName": "metadata_storage_name",
+        "targetFieldName": "metadata_storage_name",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "metadata_storage_path",
+        "targetFieldName": "metadata_storage_path",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "metadata_content_type",
+        "targetFieldName": "metadata_content_type",
+        "mappingFunction": null
+      }
+    ],
+    "outputFieldMappings": [
+      {
+        "sourceFieldName": "/document/keyphrases",
+        "targetFieldName": "keyphrases",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "/document/organizations",
+        "targetFieldName": "organizations",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "/document/persons",
+        "targetFieldName": "persons",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "/document/locations",
+        "targetFieldName": "locations",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "/document/quantities",
+        "targetFieldName": "quantities",
+        "mappingFunction": null
+      },
+      {
+        "sourceFieldName": "/document/dateTimes",
+        "targetFieldName": "dateTimes",
+        "mappingFunction": null
+      }
+    ],
+    "cache": null,
+    "encryptionKey": null
+  }

@@ -1,0 +1,19 @@
+{
+    "@odata.context": "https://<yourendpoint>.search.windows.net/$metadata#datasources/$entity",
+    "@odata.etag": "\"0x8DD6CBA5C43B879\"",
+    "name": "adlsgen2-<yoursourcename>-datasource",
+    "description": null,
+    "type": "adlsgen2",
+    "subtype": null,
+    "credentials": {
+      "connectionString": "ResourceId=/subscriptions/<yoursubscription/resourceGroups/<yourresourcegroup>/providers/Microsoft.Storage/storageAccounts/<yourstorageaccount;"
+    },
+    "container": {
+      "name": "guidelines",
+      "query": "standards"
+    },
+    "dataChangeDetectionPolicy": null,
+    "dataDeletionDetectionPolicy": null,
+    "encryptionKey": null,
+    "identity": null
+  }
