@@ -67,6 +67,9 @@
                 </div>
                 <div class="card-body">
                     <div id="generatedResponse"></div>
+                    <button id="saveResponseButton" class="btn btn-secondary mt-3" style="display: none;">
+                        <i class="fa fa-download me-2"></i>Save as Text
+                    </button>
                 </div>
             </div>
         </div>
@@ -367,6 +370,12 @@
                 ${marked.parse(result.response)}
             </div>
         `;
+        
+        // Show the save button now that we have a response
+        document.getElementById('saveResponseButton').style.display = 'block';
+        
+        // Store the raw markdown for download
+        document.getElementById('saveResponseButton').setAttribute('data-response', result.response);
 
         } catch (error) {
             console.error('Error generating response:', error);
@@ -382,10 +391,30 @@
                 </ul>
             </div>
         `;
+        
+        // Hide the save button if there's an error
+        document.getElementById('saveResponseButton').style.display = 'none';
         } finally {
             generateButton.disabled = false;
         }
     }
+
+    // Add save response button click handler
+    document.getElementById('saveResponseButton').addEventListener('click', function() {
+        const responseText = this.getAttribute('data-response');
+        if (responseText) {
+            const blob = new Blob([responseText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'owner_builder_recommendations.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    });
 
     // Add this at the top of your script section
     const DEFAULT_SYSTEM_INSTRUCTION = `
