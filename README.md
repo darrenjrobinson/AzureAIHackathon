@@ -8,6 +8,7 @@ Built for the [Microsoft Azure AI Developer Hackathon - March 2025](https://azur
 
 [Devpost Hackathon Link](https://devpost.com/software/owner-builder-ai-assistant)
 
+![](./Owner%20Builder%20AI%20Assistant.png)
 
 ## Prerequsite Azure Services
 
@@ -16,7 +17,6 @@ Built for the [Microsoft Azure AI Developer Hackathon - March 2025](https://azur
 - Azure OpenAI - For generating responses and analysis
 - Azure Computer Vision - For analyzing construction drawings
 - Flask - Python web framework
-
 
 
 ## AI Document Search 
@@ -71,6 +71,7 @@ This demonstrates effective AI service chaining where output from one Azure serv
 
 ![Solution and Architecture Overview](./Owner%20Builder%20AI%20Assistant%20Arch.png)
 
+# How to Deploy and Use
 
 ## Create Azure Resources
 
