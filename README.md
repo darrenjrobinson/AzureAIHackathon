@@ -10,7 +10,7 @@ Built for the [Microsoft Azure AI Developer Hackathon - March 2025](https://azur
 
 ![](./Owner%20Builder%20AI%20Assistant.png)
 
-## Prerequsite Azure Services
+## Prerequisite Azure Services
 
 - Azure AI Services - For intelligent document analysis
 - Azure AI Search - For intelligent document search
@@ -97,12 +97,12 @@ Create a Resource Group https://portal.azure.com/#@increment.inc/resource/subscr
             3) Upload construction reference documents to the folder
 		iii. Add Storage Blob Data Reader permission to the Azure AI Search Service Managed Identity	
 
-Here are the reference standards and guidelines I used for New South Wales in Australia that contain all the information for compliance, health & saftey. 
+Here are the reference standards and guidelines I used for New South Wales in Australia that contain all the information for compliance, health & safety. 
 For reference they are also in the Azure AI Search 'guidelines' subfolder.
 
 ![](./Azure%20Storage%20Account%20-%20Ref%20Standards.png)
 
-Here is a screenshot of the structual drawings for the footings, walls and roof of my building project that was uploaded in the demo and analysed with Azure AI Vision and Azure Open AI. 
+Here is a screenshot of the structural drawings for the footings, walls and roof of my building project that was uploaded in the demo and analysed with Azure AI Vision and Azure Open AI. 
 
 ![](./Structual%20Drawing%20with%20specifications.png)
 
